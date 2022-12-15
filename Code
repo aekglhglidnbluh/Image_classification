@@ -14,6 +14,11 @@ from tensorflow.keras import layers
 from tensorflow.keras import Model 
 import matplotlib.pyplot as plt
 
+#local_zip = '1000_samples_archive.zip'
+zip_ref = zipfile.ZipFile('1000_samples_archive.zip', 'r')
+#zip_ref.extractall('/tmp')
+zip_ref.close()
+
 base_dir = '/train_video.csv'
 train_dir = os.path.join(base_dir, 'train')
 validation_dir = os.path.join(base_dir, 'validation')
