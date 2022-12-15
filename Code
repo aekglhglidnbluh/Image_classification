@@ -1,0 +1,166 @@
+!pip install wget
+!wget --no-check-certificate \
+    https://storage.yandexcloud.net/samplesvideos/train_video_class_uni_nobeer_1.csv \
+    -O /train_video.csv
+!wget --no-check-certificate \
+    https://storage.yandexcloud.net/samplesvideos/1000_samples_archive.zip \
+     -O /1000_videos.zip
+     
+import os 
+import zipfile 
+import tensorflow as tf 
+from tensorflow.keras.preprocessing.image import ImageDataGenerator 
+from tensorflow.keras import layers 
+from tensorflow.keras import Model 
+import matplotlib.pyplot as plt
+
+base_dir = '/train_video.csv'
+train_dir = os.path.join(base_dir, 'train')
+validation_dir = os.path.join(base_dir, 'validation')
+
+# Directory with our training cat pictures
+train_animal_dir = os.path.join(train_dir, 'animal')
+
+# Directory with our training dog pictures
+train_car_dir = os.path.join(train_dir, 'car')
+
+# Directory with our validation cat pictures
+validation_animal_dir = os.path.join(validation_dir, 'animal')
+
+# Directory with our validation dog pictures
+validation_car_dir = os.path.join(validation_dir, 'car')
+# Directory with our training cat pictures
+train_cloud_dir = os.path.join(train_dir, 'cloud')
+
+# Directory with our training dog pictures
+train_dance_dir = os.path.join(train_dir, 'dance')
+
+# Directory with our validation cat pictures
+validation_cloud_dir = os.path.join(validation_dir, 'cloud')
+
+# Directory with our validation dog pictures
+validation_dance_dir = os.path.join(validation_dir, 'dance')
+# Directory with our training cat pictures
+train_fire_dir = os.path.join(train_dir, 'fire')
+
+# Directory with our training dog pictures
+train_flower_dir = os.path.join(train_dir, 'flower')
+
+# Directory with our validation cat pictures
+validation_fire_dir = os.path.join(validation_dir, 'fire')
+
+# Directory with our validation dog pictures
+validation_flower_dir = os.path.join(validation_dir, 'flower')
+# Directory with our training cat pictures
+train_food_dir = os.path.join(train_dir, 'food')
+
+# Directory with our training dog pictures
+train_sunset_dir = os.path.join(train_dir, 'sunset')
+
+# Directory with our validation cat pictures
+validation_food_dir = os.path.join(validation_dir, 'food')
+
+# Directory with our validation dog pictures
+validation_sunset_dir = os.path.join(validation_dir, 'sunset')
+
+# Directory with our training dog pictures
+train_water_dir = os.path.join(train_dir, 'water')
+
+# Directory with our validation dog pictures
+validation_car_dir = os.path.join(validation_dir, 'water')
+
+import matplotlib.image as mpimg
+nrows = 4
+ncols = 4
+
+fig = plt.gcf()
+fig.set_size_inches(ncols*4, nrows*4)
+pic_index = 100
+train_animal_fnames = os.listdir( train_animal_dir )
+train_water_fnames = os.listdir( train_water_dir )
+train_sunset_fnames = os.listdir( train_sunset_dir )
+train_food_fnames = os.listdir( train_food_dir )
+train_flower_fnames = os.listdir( train_flower_dir )
+train_fire_fnames = os.listdir( train_fire_dir )
+train_dance_fnames = os.listdir( train_dance_dir )
+train_cloud_fnames = os.listdir( train_cloud_dir )
+train_car_fnames = os.listdir( train_car_dir )
+
+next_animal_pix = [os.path.join(train_animal_dir, fname) 
+                for fname in train_animal_fnames[ pic_index-8:pic_index] 
+               ]
+
+next_water_pix = [os.path.join(train_water_dir, fname) 
+                for fname in train_water_fnames[ pic_index-8:pic_index]
+               ]
+next_sunset_pix = [os.path.join(train_sunset_dir, fname) 
+                for fname in train_sunset_fnames[ pic_index-8:pic_index]
+               ]
+next_food_pix = [os.path.join(train_food_dir, fname) 
+                for fname in train_food_fnames[ pic_index-8:pic_index]
+               ]
+next_flower_pix = [os.path.join(train_flower_dir, fname) 
+                for fname in train_flower_fnames[ pic_index-8:pic_index]
+               ]
+next_fire_pix = [os.path.join(train_fire_dir, fname) 
+                for fname in train_fire_fnames[ pic_index-8:pic_index]
+               ]
+next_dance_pix = [os.path.join(train_dance_dir, fname) 
+                for fname in train_dance_fnames[ pic_index-8:pic_index]
+               ]
+next_cloud_pix = [os.path.join(train_cloud_dir, fname) 
+                for fname in train_cloud_fnames[ pic_index-8:pic_index]
+               ]
+next_car_pix = [os.path.join(train_car_dir, fname) 
+                for fname in train_car_fnames[ pic_index-8:pic_index]
+               ]
+
+
+for i, img_path in enumerate(next_car_pix + next_cloud_pix + next_dance_pix + next_flower_pix + next_fire_pix + next_food_pix + next_sunset_pix + next_water_pix + next_animal_pix):
+  # Set up subplot; subplot indices start at 1
+  sp = plt.subplot(nrows, ncols, i + 1)
+  sp.axis('Off') # Don't show axes (or gridlines)
+
+  img = mpimg.imread(img_path)
+  plt.imshow(img)
+
+plt.show()
+
+# Add our data-augmentation parameters to ImageDataGenerator
+train_datagen = ImageDataGenerator(rescale = 1./255.,rotation_range = 40, width_shift_range = 0.2, height_shift_range = 0.2, shear_range = 0.2, zoom_range = 0.2, horizontal_flip = True)
+
+# Note that the validation data should not be augmented!
+test_datagen = ImageDataGenerator( rescale = 1.0/255. )
+
+# Flow training images in batches of 20 using train_datagen generator
+train_generator = train_datagen.flow_from_directory(train_dir, batch_size = 20, class_mode = 'binary', target_size = (224, 224))
+
+# Flow validation images in batches of 20 using test_datagen generator
+validation_generator = test_datagen.flow_from_directory( validation_dir,  batch_size = 20, class_mode = 'binary', target_size = (224, 224))
+
+from tensorflow.keras.applications.vgg16 import VGG16
+
+base_model = VGG16(input_shape = (224, 224, 3), # Shape of our images
+include_top = False, # Leave out the last fully connected layer
+weights = 'imagenet')
+
+for layer in base_model.layers:
+    layer.trainable = False
+    
+# Flatten the output layer to 1 dimension
+x = layers.Flatten()(base_model.output)
+
+# Add a fully connected layer with 512 hidden units and ReLU activation
+x = layers.Dense(512, activation='relu')(x)
+
+# Add a dropout rate of 0.5
+x = layers.Dropout(0.5)(x)
+
+# Add a final sigmoid layer for classification
+x = layers.Dense(1, activation='sigmoid')(x)
+
+model = tf.keras.models.Model(base_model.input, x)
+
+model.compile(optimizer = tf.keras.optimizers.RMSprop(lr=0.0001), loss = 'binary_crossentropy',metrics = ['acc'])
+
+vgghist = model.fit(train_generator, validation_data = validation_generator, steps_per_epoch = 100, epochs = 10) 
